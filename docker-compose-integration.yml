@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  web:
+    build:
+      context: ./src
+      dockerfile: School.WebApi/Dockerfile
+    ports: 
+      - 5000:5000
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    entrypoint: dotnet /app/School.WebApi.dll
+ 
+
+
+ 
