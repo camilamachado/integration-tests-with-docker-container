@@ -44,3 +44,66 @@ https://www.lambda3.com.br/2019/05/utilizando-docker-em-testes-de-integracao/
 https://github.com/mguardarini/docker-dotnetcore
 
 https://github.com/mariotoffia/FluentDocker
+
+
+
+## ABORDAGEM 1: Testes com integração completa
+
+1.  **Disponibilizar Identity**:large_blue_circle::
+   - Subir identity *(em container especifico de tests)*
+     - Criar BaseIntegrationTest no projeto nddSmart.PrintersModule.IntegrationTests *(ver School.Integration.Tests)*
+   - Obter token para criação do tenant *(usar scope nddsmart-mps-integration-api)*
+     - Através de chamada http client
+     - Criar BaseIntegrationTest no projeto nddSmart.PrintersModule.IntegrationTests com variável que vai armazenar esse token
+2. **Subir dependências em container** :large_blue_circle:: *(usar SQL local? | usar bancos especificos p/ teste?)*
+   - nddSmart.Core.Web.API (ver necessidade)
+   - nddSmart.Core.Web.MPS.Integration.API
+   - nddSmart.Core.Service.BaseProcessor
+   - nddSmart.PrintersModule.Web.Api
+   - nddSmart.PrintersModule.Service.Processor
+   - nddSmart.PrintersModule.Service.SupplyProcessor
+3. **Criar tenant e usuário adm** :large_blue_circle::  
+   - Criar tenant com usuário adm (através de chamada http client no projeto)
+     - Validar polices do usuário (TenantCatalogDb)
+   - Setar senha através de script SQL? 
+4. **Obter token de acesso com usuário** :red_circle::
+   - Obter acesso com scope nddsmart-core-web-api *(validar se o token muda)*
+   - Obter acesso com scope nddsmart-printer-web-api *(validar se o token muda)*
+     - Fazer uma chamada qualquer p/ o nddSmart.PrintersModule.Web.Api p/ aplicar o esquema de BD e polices
+5. **Seed dados básicos** :white_circle::
+   - Criar uma organização *(através de chamada http client)*
+   - Criar um impressora *(através de chamada http client)*
+   - Ao final dos testes apagar os bancos?
+
+6. **Iniciar criação dos testes e medir febre**
+   - Ver possibilidade de usar o Contexto de printer diretamente p/ fazer Seed
+
+
+
+## ABORDAGEM 2: Testes com integração média
+
+1.  **Disponibilizar Identity** :large_blue_circle:: 
+   - Subir identity *(em container especifico de tests)*
+     - Criar BaseIntegrationTest no projeto nddSmart.PrintersModule.IntegrationTests *(ver School.Integration.Tests)*
+     - Configurar usuários padrão (ver configs\identity-local\identityseed.acceptance)
+
+2. **Subir dependências em container** :large_blue_circle:: *(usar SQL local? | usar bancos especificos p/ teste?)*
+   - nddSmart.PrintersModule.Web.Api
+   - nddSmart.PrintersModule.Service.Processor
+   - nddSmart.PrintersModule.Service.SupplyProcessor
+3. **Criar banco de dados do Tenant de testes de integração** :large_blue_circle:
+   - Criar baseado na ferramenta dos teste de aceitação (nddSmart.Core.AcceptationTests.Tool)
+   - Inserir usuários padrão conforme na configuração do identity realizada no passo acima
+   - Criar uma organização 
+   - Criar um impressora 
+   - Ao final dos testes apagar os bancos?
+4. **Adicionar o tenant no TenantCatalogDb** :red_circle::
+   - Adicionar através de script SQL (verificar se tem acesso ao Contexto)
+5. **Adicionar as polices no TenantCatalogDb** :red_circle::
+   - Adicionar através de script SQL (verificar se tem acesso ao Contexto)
+
+6. **Obter token de acesso com usuário** :red_circle::
+   - Obter acesso com scope nddsmart-core-web-api *(validar se o token muda)*
+   - Obter acesso com scope nddsmart-printer-web-api *(validar se o token muda)*
+7. **Iniciar criação dos testes e medir febre**
+   - Seed de dados sempre através do Contexto de printer diretamente
